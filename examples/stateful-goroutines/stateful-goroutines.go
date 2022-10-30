@@ -61,9 +61,13 @@ func main() {
 			select {
 			case read := <-reads:
 				read.resp <- state[read.key]
+				fmt.Println("r1", readOps)
+
 			case write := <-writes:
 				state[write.key] = write.val
 				write.resp <- true
+				fmt.Println("w1", writeOps)
+
 			}
 		}
 	}()
@@ -82,6 +86,7 @@ func main() {
 				reads <- read
 				<-read.resp
 				atomic.AddUint64(&readOps, 1)
+				fmt.Println("r2", readOps)
 				time.Sleep(time.Millisecond)
 			}
 		}()
@@ -99,6 +104,7 @@ func main() {
 				writes <- write
 				<-write.resp
 				atomic.AddUint64(&writeOps, 1)
+				fmt.Println("w2", writeOps)
 				time.Sleep(time.Millisecond)
 			}
 		}()
