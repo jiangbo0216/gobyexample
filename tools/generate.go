@@ -12,10 +12,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/alecthomas/chroma"
-	"github.com/alecthomas/chroma/formatters/html"
-	"github.com/alecthomas/chroma/lexers"
-	"github.com/alecthomas/chroma/styles"
+	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/formatters/html"
+	"github.com/alecthomas/chroma/v2/lexers"
+	"github.com/alecthomas/chroma/v2/styles"
 
 	"github.com/russross/blackfriday/v2"
 )
@@ -145,7 +145,6 @@ func parseSegs(sourcePath string) ([]*Seg, string) {
 		lines = append(lines, strings.Replace(line, "\t", "    ", -1))
 		source = append(source, line)
 	}
-	filecontent := strings.Join(source, "\n")
 	segs := []*Seg{}
 	lastSeen := ""
 	for _, line := range lines {
@@ -175,7 +174,12 @@ func parseSegs(sourcePath string) ([]*Seg, string) {
 				newSeg := Seg{Docs: "", Code: line}
 				segs = append(segs, &newSeg)
 			} else {
-				segs[len(segs)-1].Code = segs[len(segs)-1].Code + "\n" + line
+				lastSeg := segs[len(segs)-1]
+				if len(lastSeg.Code) == 0 {
+					lastSeg.Code = line
+				} else {
+					lastSeg.Code = lastSeg.Code + "\n" + line
+				}
 			}
 			debug("CODE: " + line)
 			lastSeen = "code"
@@ -186,7 +190,7 @@ func parseSegs(sourcePath string) ([]*Seg, string) {
 		seg.CodeLeading = (i < (len(segs) - 1))
 		seg.CodeRun = strings.Contains(seg.Code, "package main")
 	}
-	return segs, filecontent
+	return segs, strings.Join(source, "\n")
 }
 
 func chromaFormat(code, filePath string) string {
@@ -353,30 +357,32 @@ var SimpleShellOutputLexer = chroma.MustNewLexer(
 		Filenames: []string{"*.sh"},
 		MimeTypes: []string{},
 	},
-	chroma.Rules{
-		"root": {
-			// $ or > triggers the start of prompt formatting
-			{`^\$`, chroma.GenericPrompt, chroma.Push("prompt")},
-			{`^>`, chroma.GenericPrompt, chroma.Push("prompt")},
+	func() chroma.Rules {
+		return chroma.Rules{
+			"root": {
+				// $ or > triggers the start of prompt formatting
+				{`^\$`, chroma.GenericPrompt, chroma.Push("prompt")},
+				{`^>`, chroma.GenericPrompt, chroma.Push("prompt")},
 
-			// empty lines are just text
-			{`^$\n`, chroma.Text, nil},
+				// empty lines are just text
+				{`^$\n`, chroma.Text, nil},
 
-			// otherwise its all output
-			{`[^\n]+$\n?`, chroma.GenericOutput, nil},
-		},
-		"prompt": {
-			// when we find newline, do output formatting rules
-			{`\n`, chroma.Text, chroma.Push("output")},
-			// otherwise its all text
-			{`[^\n]+$`, chroma.Text, nil},
-		},
-		"output": {
-			// sometimes there isn't output so we go right back to prompt
-			{`^\$`, chroma.GenericPrompt, chroma.Pop(1)},
-			{`^>`, chroma.GenericPrompt, chroma.Pop(1)},
-			// otherwise its all output
-			{`[^\n]+$\n?`, chroma.GenericOutput, nil},
-		},
+				// otherwise its all output
+				{`[^\n]+$\n?`, chroma.GenericOutput, nil},
+			},
+			"prompt": {
+				// when we find newline, do output formatting rules
+				{`\n`, chroma.Text, chroma.Push("output")},
+				// otherwise its all text
+				{`[^\n]+$`, chroma.Text, nil},
+			},
+			"output": {
+				// sometimes there isn't output so we go right back to prompt
+				{`^\$`, chroma.GenericPrompt, chroma.Pop(1)},
+				{`^>`, chroma.GenericPrompt, chroma.Pop(1)},
+				// otherwise its all output
+				{`[^\n]+$\n?`, chroma.GenericOutput, nil},
+			},
+		}
 	},
 )

@@ -19,9 +19,11 @@ Strings and Runes
 Structs
 Methods
 Interfaces
+Enums
 Struct Embedding
 Generics
 Errors
+Custom Errors
 Goroutines
 Channels
 Channel Buffering
@@ -71,6 +73,7 @@ Command-Line Arguments
 Command-Line Flags
 Command-Line Subcommands
 Environment Variables
+Logging
 HTTP Client
 HTTP Server
 Context

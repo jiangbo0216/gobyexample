@@ -3,7 +3,10 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"maps"
+)
 
 func main() {
 
@@ -22,7 +25,13 @@ func main() {
 
 	// Get a value for a key with `name[key]`.
 	v1 := m["k1"]
-	fmt.Println("v1: ", v1)
+	fmt.Println("v1:", v1)
+
+	// If the key doesn't exist, the
+	// [zero value](https://go.dev/ref/spec#The_zero_value) of the
+	// value type is returned.
+	v3 := m["k3"]
+	fmt.Println("v3:", v3)
 
 	// The builtin `len` returns the number of key/value
 	// pairs when called on a map.
@@ -31,6 +40,11 @@ func main() {
 	// The builtin `delete` removes key/value pairs from
 	// a map.
 	delete(m, "k2")
+	fmt.Println("map:", m)
+
+	// To remove *all* key/value pairs from a map, use
+	// the `clear` builtin.
+	clear(m)
 	fmt.Println("map:", m)
 
 	// The optional second return value when getting a
@@ -47,4 +61,11 @@ func main() {
 	// the same line with this syntax.
 	n := map[string]int{"foo": 1, "bar": 2}
 	fmt.Println("map:", n)
+
+	// The `maps` package contains a number of useful
+	// utility functions for maps.
+	n2 := map[string]int{"foo": 1, "bar": 2}
+	if maps.Equal(n, n2) {
+		fmt.Println("n == n2")
+	}
 }
